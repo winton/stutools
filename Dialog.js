@@ -79,16 +79,24 @@ var Dialog = Base.extend({
 	  onShow: 	  Class.empty,  // must call dialog.show(), this.ready()
 		onHide:     Class.empty,
 		onSubmit:   Class.empty,
-		onResponse: Class.empty,
+		onRespond: Class.empty,
 		
-		centered: false, lightbox: false,
-		injectInside: null, template_dialog: '#template_dialog', trigger: null
+		onValidationFailed: Class.empty,
+		onValidationReset:  Class.empty,
+		
+		centered: false,
+		lightbox: false,
+		
+		inside: null,
+		trigger: null,
+
+		dialog_template: '#template_dialog',
+		method: 'post'
 	},
 	initialize: function(template, options) {
-	  this.options.template = this.options.trigger = '#' + template;
-	  
+	  this.options.trigger = '#' + template;
 	  this.elements.load.template = '#template_' + template;
-	  this.elements.load.template_dialog = this.options.template_dialog;
+	  this.elements.load.dialog_template = this.options.dialog_template;
 	  this.elements.dialog.filter = this.elements.container.dialog = '#dialog_' + template;
 	  
 	  this.setOptions(options);
@@ -103,16 +111,14 @@ var Dialog = Base.extend({
 	  if (this.options.lightbox)
 	    Global.Lightbox.attachDialog(this);
 	  if (this.options.trigger)
-	    this.options.trigger.addEvent('click', function(e) { this.show(); }.bindWithEvent(this));
-	  
-	  console.log()
+	    this.options.trigger.addEvent('click', function(e) { e.stop(); this.show(); }.bindWithEvent(this));
   },
   
   // Events
   
   onCloseClick: function(e) {
+    e.stop();
 		this.hide();
-		e.stop();
 	},
 	onFormKeyDown: function(e) {
 		if (e.key == 'esc')		this.hide();
@@ -134,12 +140,12 @@ var Dialog = Base.extend({
 	*/
 
 	hide: function(keep_lightbox) {
-		if (this.el.dialog) this.fireEvent.pass([ 'onHide', [ this.el.dialog, keep_lightbox] ], this);
+		if (this.el.dialog) this.fireEvent('onHide', [ this.el.dialog, keep_lightbox]);
 	},
 	
 	/*
 	Property: ready
-		Focuses the form.
+		Called by onShow. Focuses the form.
 	*/
 	
 	ready: function() {
@@ -155,18 +161,20 @@ var Dialog = Base.extend({
 	*/
 	
 	render: function(data) {
-	  data.content = data.content || this.el.template.render(data);
+	  data = data || {};
+	  data.content = data.content || this.el.template.render(data, true);
 	  var dialog = this.el.dialog_template.render(data);
-	  dialog.id = this.options.template;
+	  dialog.id = this.elements.container.dialog.substring(1);
 	  
 	  if (this.el.dialog) {
 	    this.el.dialog.replaceWith(dialog);
 	    if (this.options.centered) this.el.dialog.center();
 	  } else
-	    dialog.injectInside(this.options.injectInside || document.body);
+	    dialog.injectInside($(this.options.inside) || document.body);
 		
 		this.loadElements('container');
 		this.loadElements('dialog');
+		
 		return this;
 	},
 	
@@ -244,8 +252,27 @@ var Dialog = Base.extend({
 		else {
 		  this.fireEvent('onSubmit', this.el.dialog);
 		  this.el.form.send({
+		    method: this.options.method,
 				onComplete: function(r) {
-				  this.fireEvent('onResponse', [ this.el.dialog, Json.evaluate(r) ]);
+				  var json = Json.evaluate(r);
+				  this.fireEvent('onRespond', [ this.el.dialog, json ]);
+				  if (json.errors) {
+				    var inputs = $ES('input, textarea', this.el.form).sort(function(a, b) {
+				      return a.getProperty('tabindex').toInt() - b.getProperty('tabindex').toInt();
+				    });
+				    var index = 1000;
+				    inputs.each(function(item) { this.fireEvent('onValidationReset', item); }, this);
+				    $each(json.errors, function(value, model) {
+				      $each(value, function(messages, name) {
+				        var el = this.el.form[model + '[' + name + ']'];
+				        index = inputs.indexOf(el) < index ? inputs.indexOf(el) : index;
+				        this.fireEvent('onValidationFailed', [ el , messages ]);
+				      }, this);
+				    }, this);
+				    inputs[index].select();
+				    inputs[index].fireEvent('focus');
+				  } else if (json.location)
+				    window.location = json.location;
 				}.bind(this)
 			});
 		}
@@ -254,73 +281,3 @@ var Dialog = Base.extend({
 
 Dialog.implement(new Events);
 Dialog.implement(new Options);
-
-/*
-Class: Dialog.Input
-	Returns a generic form handling <Dialog> instance.
-
-Arguments:
-	template - The ID of the dialog template.
-	options - See <Dialog> options.
-
-Example:
-	> var dialog_input = Dialog.Input('template_dialog', { title: 'Log In' });
-*/
-
-Dialog.Input = function(template, options) {
-	options = (options) ? options : {};
-	
-	var submit = options.onSubmit;
-	delete options.onSubmit;
-	
-	$extend(options, {
-		onClose: 	Dialog.Events.onClose.remove,
-		onOpen: 	Dialog.Events.onOpen.reset,
-		onReady: 	Dialog.Events.onReady.focus
-	});
-	
-	var dialog = new Dialog(template, options);
-	
-	dialog.setOptions({
-		onSubmit: (submit) ?
-			Dialog.Events.onSubmit.send.pass(submit.bind(dialog), dialog) :
-			Dialog.Events.onSubmit.send
-	});
-	
-	return dialog;
-};
-
-/*
-Class: Dialog.Simple
-	Returns a very generic (content only) <Dialog> instance.
-
-Arguments:
-	template - The ID of the dialog template.
-	options - See <Dialog> options.
-
-Example:
-	> var dialog = Dialog.Simple('template_dialog', { title: 'My Content' });
-*/
-
-Dialog.Simple = function(template, options) {
-	options = options ? options : {};
-	
-	$extend(options, {
-		onClose: 	Dialog.Events.onClose.remove
-	});
-	
-	return new Dialog(template, options);
-};
-
-Element.extend({
-	center: function() {
-		var width 	= this.getSize().size.x;
-		var height 	= this.getSize().size.y;
-
-		this.setStyles({
-			position: 'absolute',
-			left: (Window.getWidth() / 2 - width / 2) + Window.getScrollLeft() + 'px',
-			top:  (Window.getHeight() / 2 - height / 2) + Window.getScrollTop() + 'px'
-		});
-	}
-});

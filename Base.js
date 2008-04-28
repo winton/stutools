@@ -41,6 +41,7 @@ Example:
 var Base = new Class({
 	
 	initialize: function() {
+	  this.el = {};
 		if (this.elements.load)
 			this.loadElements('load');
 	},
@@ -48,19 +49,17 @@ var Base = new Class({
 	loadElement: function(name, group) {
 		if (name == 'filter') return false;
 		
-		var filter		= this.elements[group].filter;
-		var selector 	= this.elements[group][name];
-		
-		var elements	= $ES(selector, (filter) ? $$(filter)[0] : null);
-		
-		var eventName	= 'on' + name.split('_').map(function(item) { return item.capitalize(); }).join('');
-		var regex		= new RegExp(eventName + '[a-zA-Z]+');
+		var filter    = this.elements[group].filter;
+		var selector  = this.elements[group][name];
+		var elements  = $ES(selector, (filter) ? $$(filter)[0] : null);
+		var eventName = 'on' + name.split('_').map(function(item) { return item.capitalize(); }).join('');
+		var regex     = new RegExp(eventName + '[a-zA-Z]+');
 		
 		// addEvent for fn matches
 		for (fn in this) {
 			if ($type(this[fn]) != 'function') continue;
 			if (regex.test(fn)) {
-				var event 	= fn.substring(eventName.length).toLowerCase();
+				var event = fn.substring(eventName.length).toLowerCase();
 								
 				elements.each(function(item) {
 					item.removeEvents(event);
@@ -71,8 +70,8 @@ var Base = new Class({
 			
 		this.el[name] = elements;
 		
-		// force array
-		if (!this.elements.force_array.contains(name) && this.el[name].length == 1)
+		// if the element name is singular and is one element long, kill the array
+		if (name.charAt(name.length - 1) != 's' && this.el[name].length == 1)
 			this.el[name] = this.el[name][0];
 		
 		return this.el[name];

@@ -64,8 +64,7 @@ Element.extend({
 	*/
 	
 	fadeIn: function(duration, onComplete, bind) {
-		this.getFx(duration ? duration : 200, onComplete, bind);
-		this.fx.set({ opacity:0 });
+		this.getFx(duration ? duration : 200, onComplete, bind).set({ opacity:0 });
 		this.show();
 		this.fx.start({ opacity:1 });
 	},
@@ -81,8 +80,7 @@ Element.extend({
 	*/
 	
 	fadeOut: function(duration, onComplete, bind) {
-	  this.getFx(duration ? duration : 200, onComplete, bind);
-		this.fx.start({ opacity:0 });
+	  this.getFx(duration ? duration : 200, onComplete, bind).start({ opacity:0 });
 	},
 	
 	/*
@@ -111,10 +109,12 @@ Element.extend({
 	
 	getFx: function(duration, onComplete, bind, options) {
 	  options = options || {};
+	  if (duration) options.duration = duration;
 		if (!this.fx) this.fx = new Fx.Styles(this);
-		this.fx.setOptions($extend({ wait:false, duration:duration }, options));
+		this.fx.setOptions($extend({ wait:false, duration:200 }, options));
 		this.fx.$events = this.fx.$events || {};
     this.fx.$events.onComplete = onComplete ? [ onComplete.bind(bind) ] : [];
+    return this.fx;
 	},
 	
 	/*
@@ -142,7 +142,12 @@ Element.extend({
 	
 	render: function(data, return_html) {
 		var html = TrimPath.processDOMTemplate(this.id, $merge({}, data));
-		return return_html ? html : new Element('div').setHTML(html).getFirst();
+		if (!return_html) {
+		  var el = new Element('div');
+		  el.setHTML(html);
+		  html = el.getFirst();
+		}
+		return html;
 	},
 	
 	/*

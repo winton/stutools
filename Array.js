@@ -14,22 +14,6 @@ Structure: Array
 Array.extend({
 	
 	/*
-	Property: toObject
-		Returns an object with the Array's values as keys.
-	
-	Arguments:
-		fill - (default: null) All values are set to this value.
-	*/
-	
-	toObject: function(fill) {
-		var obj = {};
-		this.each(function(item) {
-			obj[item] = (fill) ? fill : true;
-		});
-		return obj;
-	},
-	
-	/*
 	Property: zebra
 		Adds the class name "zebra" to even or odd indices of the element array
 	

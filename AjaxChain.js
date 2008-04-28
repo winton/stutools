@@ -50,7 +50,6 @@ var AjaxChain = new Class({
 				this.chains[0].delay(10, this);
 			else {
 				this.chains.shift();
-			
   			if (this.chains.length)
   				this.chains[0].delay(10, this);
   			else

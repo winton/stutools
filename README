@@ -1,0 +1,48 @@
+== StuTools by Winton Welsh <win@sumapp.com>
+
+Useful addons to the popular MooTools javascript library.
+
+
+== Install
+
+(From RAILS_ROOT)
+cd public/javascripts
+git submodule add git@github.com:winton/stutools.git stutools
+ruby stutools/assets/setup.rb
+
+
+== Application helper
+
+def mootools
+  RAILS_ENV == 'development' ? 'stutools/assets/moo' : 'moo'
+end
+
+def stutools
+  if RAILS_ENV == 'development'
+    Dir[RAILS_ROOT + "/public/javascripts/stutools/*.js"].collect { |f| 'stutools/' + File.basename(f, '.js') }
+  else
+    'stu'
+  end
+end
+
+
+== Layout
+
+<%= javascript_include_tag mootools %>
+<%= javascript_include_tag stutools %>
+or
+<%= javascript_include_tag *(mootools + stutools + [ :cache => true ]) %>
+
+
+== Files
+
+stutools/*.js
+  StuTools library files
+
+stutools/assets/moo.js
+  MooTools version 1.11 with a few minor fixes
+  Json is always expected - setHeader('Accept', 'application/json')
+
+stutools/assets/setup.rb
+  Joins and compresses StuTools library files to /javascripts/stu.js
+  Compresses MooTools library to                 /javascripts/moo.js

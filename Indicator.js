@@ -7,16 +7,16 @@ License:
 */
 
 var Indicator = new Class({
-	initialize: function(image) {
+	initialize: function(image, x, y) {
 		this.container = new Element('div');
-		this.container.setHTML('<img src="' + image + '" />');
+		this.container.setHTML('<img src="/images/' + image + '" />');
 		this.container.setStyles({ position: 'absolute', opacity: 0, 'z-index': 5000 });
 		this.container.injectInside(document.body);
 		
 		$(document.body).addEvent('mousemove', function(e) {
 			this.container.setStyles({
-				top: 	e.page.y + 5 + 'px',
-				left: e.page.x + 5 + 'px'
+				top: 	e.page.y + y + 'px',
+				left: e.page.x + x + 'px'
 			});
 		}.bindWithEvent(this));
 	},
