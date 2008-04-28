@@ -70,16 +70,13 @@ Example:
 */
 
 var Dialog = Base.extend({
-  elements: {
-    load: {}, container: {}, dialog: { close: '.close', form: 'form', submit: '.submit' }
-	},
   options: {
 		elements: {}, events: {},
 		
 	  onShow: 	  Class.empty,  // must call dialog.show(), this.ready()
 		onHide:     Class.empty,
 		onSubmit:   Class.empty,
-		onRespond: Class.empty,
+		onRespond:  Class.empty,
 		
 		onValidationFailed: Class.empty,
 		onValidationReset:  Class.empty,
@@ -87,13 +84,17 @@ var Dialog = Base.extend({
 		centered: false,
 		lightbox: false,
 		
-		inside: null,
+		inside:  null,
 		trigger: null,
 
 		dialog_template: '#template_dialog',
 		method: 'post'
 	},
 	initialize: function(template, options) {
+	  this.elements = {
+      load: {}, container: {}, dialog: { close: '.close', form: 'form', submit: '.submit' }
+  	};
+	  
 	  this.options.trigger = '#' + template;
 	  this.elements.load.template = '#template_' + template;
 	  this.elements.load.dialog_template = this.options.dialog_template;
@@ -121,7 +122,7 @@ var Dialog = Base.extend({
 		this.hide();
 	},
 	onFormKeyDown: function(e) {
-		if (e.key == 'esc')		this.hide();
+		if (e.key == 'esc') this.hide();
 		if (e.key == 'enter' && e.target.tagName != 'TEXTAREA')	this.submit(e);
 	},
 	onFormSubmit: function(e) {
@@ -208,6 +209,11 @@ var Dialog = Base.extend({
 		}).request();
 		
 		return this;
+	},
+	
+	reset: function() {
+	  this.el.form.reset();
+	  $ES('input, textarea', this.el.form).each(function(item) { this.fireEvent('onValidationReset', item); }, this);
 	},
 	
 	resize: function() {
