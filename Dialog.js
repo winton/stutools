@@ -70,37 +70,36 @@ Example:
 */
 
 var Dialog = Base.extend({
-  options: {
-		elements: {}, events: {},
-		
-	  onShow: 	  Class.empty,  // must call dialog.show(), this.ready()
-		onHide:     Class.empty,
-		onSubmit:   Class.empty,
-		onRespond:  Class.empty,
-		
-		onValidationFailed: Class.empty,
-		onValidationReset:  Class.empty,
-		
-		centered: false,
-		lightbox: false,
-		
-		inside:  null,
-		trigger: null,
+  initialize: function(template, options) {
+    this.options = {
+  		elements: {}, events: {},
 
-		dialog_template: '#template_dialog',
-		method: 'post'
-	},
-	initialize: function(template, options) {
-	  this.elements = {
-      load: {}, container: {}, dialog: { close: '.close', form: 'form', submit: '.submit' }
+  	  onShow: 	  Class.empty,  // must call dialog.show(), this.ready()
+  		onHide:     Class.empty,
+  		onSubmit:   Class.empty,
+  		onRespond:  Class.empty,
+
+  		onValidationFailed: Class.empty,
+  		onValidationReset:  Class.empty,
+
+  		centered: false,
+  		lightbox: false,
+
+  		inside:  null,
+  		trigger: '#' + template,
+
+  		dialog_template: '#template_dialog',
+  		method: 'post'
   	};
+  	this.setOptions(options);
+  	
+	  this.elements = {
+	    container: { dialog: '#dialog_' + template },
+      load:      { inside: this.options.inside,  template: '#template_' + template,  dialog_template: this.options.dialog_template },
+      dialog:    { close:  '.close',  form: 'form',  submit: '.submit' }
+  	};
+	  this.elements.dialog.filter = this.elements.container.dialog;
 	  
-	  this.options.trigger = '#' + template;
-	  this.elements.load.template = '#template_' + template;
-	  this.elements.load.dialog_template = this.options.dialog_template;
-	  this.elements.dialog.filter = this.elements.container.dialog = '#dialog_' + template;
-	  
-	  this.setOptions(options);
 	  this.options.trigger = $$(this.options.trigger);
 	  $extend(this.elements.dialog, this.options.elements);
 		$extend(this,	this.options.events);
@@ -171,7 +170,7 @@ var Dialog = Base.extend({
 	    this.el.dialog.replaceWith(dialog);
 	    if (this.options.centered) this.el.dialog.center();
 	  } else
-	    dialog.injectInside($(this.options.inside) || document.body);
+	    dialog.injectInside(this.el.inside || document.body);
 		
 		this.loadElements('container');
 		this.loadElements('dialog');
@@ -232,9 +231,9 @@ var Dialog = Base.extend({
 	  if (!this.el.dialog) this.render(data);
 	  if (this.options.centered) {
 	    this.el.dialog.setStyles({
-	      display:  '',
-  			opacity: 	0,
-  			position: 'absolute'
+	      display:   '',
+  			position:  'absolute',
+  			'z-index': 1001
   		});
   		this.el.dialog.center();
 	  }
@@ -287,3 +286,16 @@ var Dialog = Base.extend({
 
 Dialog.implement(new Events);
 Dialog.implement(new Options);
+
+Element.extend({
+  center: function() {
+    var width 	= this.getSize().size.x;
+    var height 	= this.getSize().size.y;
+
+    this.setStyles({
+      position: 'absolute',
+      left: (Window.getWidth() / 2 - width / 2) + Window.getScrollLeft() + 'px',
+      top:  (Window.getHeight() / 2 - height / 2) + Window.getScrollTop() + 'px'
+    });
+  }
+});

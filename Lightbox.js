@@ -7,21 +7,22 @@ License:
 */
 
 var Lightbox = new Class({
-	initialize: function(container) {
-		this.box 	= $(container);
+	initialize: function(color, opacity) {
+		this.box 	= new Element('div');
 		this.fire	= this.fire.bind(this);
 		
-		if (this.box)
-			this.box.addEvent('click', this.fire);
+		this.box.setStyles({ background: color, opacity: opacity, 'z-index': 1000, position: 'absolute' });
+		this.box.injectInside(document.body);
+		this.box.hide();
+		this.box.addEvent('click', this.fire);
 		
 		window.addEvent('resize', function() {
-			if (this.box && this.box.visible())
-				this.box.expand();
+			if (this.box && this.box.visible()) this.box.expand();
 		}.bind(this));
 	},
 	attachDialog: function(dialog) {
-		dialog.addEvent	('onShow', 	this.open.bind(this));
-		dialog.addEvent	('onHide', this.close.bind(this));
+		dialog.addEvent('onShow', this.show.bind(this));
+		dialog.addEvent('onHide', this.hide.bind(this));
 	},
 	detach: function() {
 		delete this['$events'];
