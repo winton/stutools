@@ -51,9 +51,14 @@ var Base = new Class({
 		
 		var filter    = this.elements[group].filter;
 		var selector  = this.elements[group][name];
-		var elements  = $ES(selector, (filter) ? $$(filter)[0] : null);
 		var eventName = 'on' + name.split('_').map(function(item) { return item.capitalize(); }).join('');
 		var regex     = new RegExp(eventName + '[a-zA-Z]+');
+		
+		if (filter && !this.el[group + '_filter']) this.el[group + '_filter'] = $$(filter)[0];
+		filter = this.el[group + '_filter'];
+		
+		try        { var elements  = $ES(selector, filter); }
+		catch(err) { return null; }
 		
 		// addEvent for fn matches
 		for (fn in this) {
