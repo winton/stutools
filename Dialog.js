@@ -284,7 +284,10 @@ var Dialog = Base.extend({
 				  var json = Json.evaluate(r);
 				  this.fireEvent('onRespond', [ this.el.dialog, json ]);
 				  if (json.errors) {
-				    var inputs = $ES('input, textarea', this.el.form).sort(function(a, b) {
+				    var inputs = $ES('input, textarea', this.el.form).filter(function(item) {
+				      return (item.getProperty('type') != 'submit');
+				    });
+				    inputs = inputs.sort(function(a, b) {
 				      return a.getProperty('tabindex').toInt() - b.getProperty('tabindex').toInt();
 				    });
 				    var index = 1000;
