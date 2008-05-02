@@ -84,9 +84,10 @@ var Dialog = Base.extend({
 
   		centered: false,
   		lightbox: false,
-
-  		inside:  null,
-  		trigger: '#' + template,
+      
+  		inside:   null,
+  		validate: null,
+  		trigger:  '#' + template,
 
   		dialog_template: '#template_dialog',
   		method: 'post'
@@ -94,24 +95,47 @@ var Dialog = Base.extend({
   	this.setOptions(options);
   	
 	  this.elements = {
-	    container: { dialog: '#dialog_' + template },
-      load:      { inside: this.options.inside,  template: '#template_' + template,  dialog_template: this.options.dialog_template },
-      dialog:    { close:  '.close',  form: 'form',  submit: '.submit' }
+	    container:  { dialog:   '#dialog_' + template },
+      load:       { dialog_template: this.options.dialog_template,
+                    template: '#template_' + template,
+                    inside:   this.options.inside,
+                    trigger:  this.options.trigger
+                  },
+      dialog:     { close: '.close',  form: 'form',  submit: '.submit', validate: this.options.validate }
   	};
+  	
 	  this.elements.dialog.filter = this.elements.container.dialog;
-	  
-	  this.options.trigger = $$(this.options.trigger);
 	  $extend(this.elements.dialog, this.options.elements);
 		$extend(this,	this.options.events);
-	  
-	  this.parent();
 	  
 	  if (this.options.centered)
 	    window.addEvent('resize', this.resize.bind(this));
 	  if (this.options.lightbox)
 	    Global.Lightbox.attachDialog(this);
 	  if (this.options.trigger)
-	    this.options.trigger.addEvent('click', function(e) { e.stop(); this.show(); }.bindWithEvent(this));
+	    this.onTriggerClick = function(e) { e.stop(); this.show(); };
+	  if (this.options.validate) {
+	    this.setOptions({
+	      onValidationFailed: function(input, message) {
+          var value = input.value;
+          input.getFx().start({ 'background-color': '#FFE2DF' });
+          input.addEvent('keyup', function() { if (input.value != value) input.setStyle('background-color', '#fff'); });
+          input.addEvent('focus', function() {
+            if (message[0] == this.el.validate.innerHTML) return;
+            this.el.validate.hide();
+            this.el.validate.setHTML(message[0]);
+            this.el.validate.fadeIn();
+          }.bind(this));
+        },
+        onValidationReset: function(input) {
+          input.removeEvents('keyup');
+          input.removeEvents('focus');
+          input.addEvent('focus', function() { this.el.validate.setHTML(''); }.bind(this));
+        }
+	    });
+	  }
+	  
+	  this.parent();
   },
   
   // Events
@@ -148,9 +172,7 @@ var Dialog = Base.extend({
 		Called by onShow. Focuses the form.
 	*/
 	
-	ready: function() {
-	  this.el.dialog.focusFirst();
-	},
+	ready: function() { this.el.dialog.focusFirst(); },
 	
 	/*
 	Property: render
