@@ -76,6 +76,7 @@ var Dialog = Base.extend({
 
   	  onShow: 	  Class.empty,  // must call dialog.show(), this.ready()
   		onHide:     Class.empty,
+  		onReady:    Class.empty,
   		onSubmit:   Class.empty,
   		onRespond:  Class.empty,
 
@@ -84,10 +85,11 @@ var Dialog = Base.extend({
 
   		centered: false,
   		lightbox: false,
+  		reset:    false,
       
-  		inside:   null,
-  		validate: null,
-  		trigger:  '#' + template,
+  		inside:    null,
+  		validates: null,
+  		trigger:   '#' + template,
 
   		dialog_template: '#template_dialog',
   		method: 'post'
@@ -101,7 +103,7 @@ var Dialog = Base.extend({
                     inside:   this.options.inside,
                     trigger:  this.options.trigger
                   },
-      dialog:     { close: '.close',  form: 'form',  submit: '.submit', validate: this.options.validate }
+      dialog:     { close: '.close',  forms: 'form',  submits: '.submit', validates: this.options.validates }
   	};
   	
 	  this.elements.dialog.filter = this.elements.container.dialog;
@@ -114,23 +116,26 @@ var Dialog = Base.extend({
 	    Global.Lightbox.attachDialog(this);
 	  if (this.options.trigger)
 	    this.onTriggerClick = function(e) { e.stop(); this.show(); };
-	  if (this.options.validate) {
+	  if (this.options.reset)
+	    this.setOptions({ onShow: function() { this.reset(); } });
+	  if (this.options.validates) {
 	    this.setOptions({
-	      onValidationFailed: function(input, message) {
+	      onValidationFailed: function(validation, input, message) {
           var value = input.value;
           input.getFx().start({ 'background-color': '#FFE2DF' });
           input.addEvent('keyup', function() { if (input.value != value) input.setStyle('background-color', '#fff'); });
           input.addEvent('focus', function() {
-            if (message[0] == this.el.validate.innerHTML) return;
-            this.el.validate.hide();
-            this.el.validate.setHTML(message[0]);
-            this.el.validate.fadeIn();
+            if (message[0] == validation.innerHTML) return;
+            validation.hide();
+            validation.setHTML(message[0]);
+            validation.fadeIn();
           }.bind(this));
         },
         onValidationReset: function(input) {
           input.removeEvents('keyup');
           input.removeEvents('focus');
-          input.addEvent('focus', function() { this.el.validate.setHTML(''); }.bind(this));
+          input.setStyle('background', '#fff');
+          input.addEvent('focus', function() { this.el.validates.setHTML(''); }.bind(this));
         }
 	    });
 	  }
@@ -144,15 +149,16 @@ var Dialog = Base.extend({
     e.stop();
 		this.hide();
 	},
-	onFormKeyDown: function(e) {
+	onFormsKeyDown: function(e, el) {
 		if (e.key == 'esc') this.hide();
-		if (e.key == 'enter' && e.target.tagName != 'TEXTAREA')	this.submit(e);
+		if (e.key == 'enter' && e.target.tagName != 'TEXTAREA')	this.onSubmitsClick(e, el);
 	},
-	onFormSubmit: function(e) {
+	onFormsSubmit: function(e) {
 		e.stop();
 	},
-	onSubmitClick: function(e) {
-		this.submit(e);
+	onSubmitsClick: function(e, el) {
+	  var form = el.tagName == 'FORM' ? el : el.childOf({ tag: 'form' });
+		this.submit(e, form);
 	},
 
 	/*
@@ -172,7 +178,14 @@ var Dialog = Base.extend({
 		Called by onShow. Focuses the form.
 	*/
 	
-	ready: function() { this.el.dialog.focusFirst(); },
+	ready: function() {
+	  this.el.dialog.focusFirst();
+	  this.fireEvent('onReady', [ this.el.dialog ]);
+	  
+	  // table support
+	  if (this.el.pages && !this.table)
+	    this.table = new Table(this.el.pages, this.options.table);
+	},
 	
 	/*
 	Property: render
@@ -187,6 +200,9 @@ var Dialog = Base.extend({
 	  data.content = data.content || this.el.template.render(data, true);
 	  var dialog = this.el.dialog_template.render(data);
 	  dialog.id = this.elements.container.dialog.substring(1);
+	  
+	  var old = $(dialog.id);
+	  if (old) old.remove();
 	  
 	  if (this.el.dialog) {
 	    this.el.dialog.replaceWith(dialog);
@@ -233,8 +249,10 @@ var Dialog = Base.extend({
 	},
 	
 	reset: function() {
-	  this.el.form.reset();
-	  $ES('input, textarea', this.el.form).each(function(item) { this.fireEvent('onValidationReset', item); }, this);
+	  this.el.forms.each(function(item) { item.reset(); });
+	  $ES('input, textarea', this.el.forms).each(function(item) {
+	    if (item.getProperty('type') != 'submit') this.fireEvent('onValidationReset', item);
+	  }, this);
 	},
 	
 	resize: function() {
@@ -272,31 +290,31 @@ var Dialog = Base.extend({
 		Submits the dialog form.
 	*/
 	
-	submit: function(e) {
+	submit: function(e, form) {
 	  e.stop();
-		if (this.el.form.hasClass('no_ajax'))
-			this.el.form.submit();
+		if (form.hasClass('no_ajax'))
+			form.submit();
 		else {
 		  this.fireEvent('onSubmit', this.el.dialog);
-		  this.el.form.send({
+		  form.send({
 		    method: this.options.method,
 				onComplete: function(r) {
 				  var json = Json.evaluate(r);
 				  this.fireEvent('onRespond', [ this.el.dialog, json ]);
 				  if (json.errors) {
-				    var inputs = $ES('input, textarea', this.el.form).filter(function(item) {
+				    var inputs = $ES('input, textarea', form).filter(function(item) {
 				      return (item.getProperty('type') != 'submit');
 				    });
 				    inputs = inputs.sort(function(a, b) {
 				      return a.getProperty('tabindex').toInt() - b.getProperty('tabindex').toInt();
 				    });
-				    var index = 1000;
+				    var index = 1000, validation = $ES(this.options.validates, form)[0];
 				    inputs.each(function(item) { this.fireEvent('onValidationReset', item); }, this);
 				    $each(json.errors, function(value, model) {
 				      $each(value, function(messages, name) {
-				        var el = this.el.form[model + '[' + name + ']'];
+				        var el = form[model + '[' + name + ']'];
 				        index = inputs.indexOf(el) < index ? inputs.indexOf(el) : index;
-				        this.fireEvent('onValidationFailed', [ el , messages ]);
+				        this.fireEvent('onValidationFailed', [ validation, el , messages ]);
 				      }, this);
 				    }, this);
 				    inputs[index].select();

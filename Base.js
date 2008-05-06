@@ -54,7 +54,8 @@ var Base = new Class({
 		var eventName = 'on' + name.split('_').map(function(item) { return item.capitalize(); }).join('');
 		var regex     = new RegExp(eventName + '[a-zA-Z]+');
 		
-		if (filter && !this.el[group + '_filter']) this.el[group + '_filter'] = $$(filter)[0];
+		if (filter && !this.el[group + '_filter'])
+		  this.el[group + '_filter'] = $type(filter) == 'string' ? $$(filter)[0] : filter;
 		filter = this.el[group + '_filter'];
 		
 		try        { var elements  = $ES(selector, filter); }

@@ -22,11 +22,12 @@ Element.extend({
 		isClass - (optional) Search by class name if true.
 	*/
 	
-	childOf: function(id, isClass) {
+	childOf: function(options) {
 		var element = this;
 		do {
-			if (isClass && $(element).hasClass(id)) return element;
-			if (!isClass && element.id == id) return element;
+			if (options.className && $(element).hasClass(options.className)) return element;
+			if (options.id && element.id == options.id) return element;
+			if (options.tag && element.tagName == options.tag.toUpperCase()) return element;
 		} while ((element.tagName != 'HTML') && (element = $(element.parentNode)));
 		return false;
 	},
