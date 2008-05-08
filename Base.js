@@ -14,7 +14,7 @@ Example:
 	>var Test = Base.extend({
 	>
 	>	initialize: function() {
-	>		this.parent();				// call Base constructor
+	>		this.parent();		// call Base constructor
 	>	},
 	>
 	>	elements: {

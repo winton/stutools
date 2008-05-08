@@ -3,12 +3,13 @@ var Table = Base.extend({
   // container
   //  .title (optional)
   //  .categories (optional)
+  //  .header (optional)
   //  .table
   //    (rows)
   //  .paginate (optional)
   initialize: function(container, options) {
     this.container = container;
-    this.options   = { map: false };
+    this.options   = { map: false, pagination_url: false };
     this.elements  = {
       table: {
         filter:     container,
@@ -27,37 +28,33 @@ var Table = Base.extend({
       this.reload.delay(200, this);
     } else
       this.reload();
+    
+    this.attachTitle();
+  },
+  onCategoriesClick: function(e) {
+    e.stop();
+    if (e.target.tagName != 'A') return;
+    var href = this.options.pagination_url + (this.options.pagination_url.indexOf('?') > -1 ? '&' : '?') + 'category=' + e.target.innerHTML;
+    var old_span = $ES('span', this.el.categories[0])[0];
+    var span = new Element('span');
+    var a = new Element('a');
+    span.setHTML(e.target.innerHTML);
+    a.setHTML(old_span.innerHTML);
+    a.setProperty('href', '#');
+    old_span.replaceWith(a);
+    e.target.replaceWith(span);
+    Global.Indicator.show();
+    new Ajax(href, {
+      method: 'get',
+      onComplete: function(r) {
+        var json = Json.evaluate(r);
+        this.reloadContent(json.pages);
+        Global.Indicator.hide();
+      }.bind(this)
+    }).request();
   },
   reload: function() {
     this.loadElements('table');
-    this.el.title.addEvent('click', function(e) {
-      e.stop();
-      
-      var shrink = true;
-      var on  = $ES('.arrow .on', this.el.title);
-      var off = $ES('.arrow .off', this.el.title);
-      
-      if (!on || !off) return;
-      
-      // title fold
-      if (this.el.title.hasClass('on')) {
-        this.el.title.removeClass('on');
-        off.show();
-        on.hide();
-      } else {
-        this.el.title.addClass('on');
-        on.show();
-        off.hide();
-        shrink = false;
-      }
-      
-      this.el.table.getChildren().each(function(row) {
-        row.show();
-        new Fx.Styles(row, {'duration': 300, 'wait': false}).start({
-					height: shrink ? 0 : row.getHeight()
-				});
-      });
-    }.bindWithEvent(this));
     
     // rows mouseover
     this.el.table.getChildren().each(function(item, index) {
@@ -91,7 +88,11 @@ var Table = Base.extend({
     $ES('.pagination a', this.container).addEvent('click', function(e) {
       e.stop();
       Global.Indicator.show();
-      new Ajax(e.target.getProperty('href'), {
+      this.el.title.removeClass('on');
+      var href = e.target.getProperty('href');
+      if (this.options.pagination_url)
+        href = this.options.pagination_url + (this.options.pagination_url.indexOf('?') > -1 ? '&' : '?') + href.split('?')[1];
+      new Ajax(href, {
         method: 'get',
         onComplete: function(r) {
           var json  = Json.evaluate(r);
@@ -105,11 +106,50 @@ var Table = Base.extend({
       }).request();
     }.bindWithEvent(this));
   },
+  attachTitle: function() {
+    if (!this.el.title) return;
+    this.el.title.addEvent('click', function(e) {
+      e.stop();
+      
+      var shrink = true;
+      var on  = $ES('.arrow .on', this.el.title);
+      var off = $ES('.arrow .off', this.el.title);
+      
+      if (!on || !off) return;
+      
+      // title fold
+      if (this.el.title.hasClass('on')) {
+        this.el.title.removeClass('on');
+        off.show();
+        on.hide();
+        shrink = false;
+      } else {
+        this.el.title.addClass('on');
+        on.show();
+        off.hide();
+      }
+      
+      this.el.table.getChildren().each(function(row) {
+        row.show();
+        if (shrink && !this.offsetHeight) this.offsetHeight = row.offsetHeight;
+        new Fx.Styles(row, {'duration': 300, 'wait': false}).start({
+  				height: shrink ? 0 : this.offsetHeight
+  			});
+      });
+    }.bindWithEvent(this));
+  },
   reloadContent: function(content) {
     this.el.table.getChildren().each(function(item, index) {
       this.fireEvent('onRowRemove', [ item, index ]);
     }, this);
-    this.container.setHTML(content);
+    var div = new Element('div');
+    div.setHTML(content);
+    this.el.table.getPrevious().remove(); // hr
+    this.el.table.getPrevious().remove(); // header
+    if (this.el.table.getNext())
+      this.el.table.getNext().remove();   // pagination
+    this.el.table.remove();
+    div.getChildren().each(function(item) { item.injectInside(this.container); }, this);
     this.reload();
   }
 });

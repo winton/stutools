@@ -184,7 +184,7 @@ var Dialog = Base.extend({
 	  
 	  // table support
 	  if (this.el.pages && !this.table)
-	    this.table = new Table(this.el.pages, this.options.table);
+	    this.table = new Table(this.el.pages[0], this.options.table);
 	},
 	
 	/*

@@ -22,5 +22,5 @@ var Indicator = new Class({
 		}.bindWithEvent(this));
 	},
 	show: function() { this.container.fadeIn(500); },
-	hide: function() { this.container.fadeOut(500); this.container.hide(); }
+	hide: function() { this.container.fadeOut(500, function() { this.container.hide(); }, this); }
 });
