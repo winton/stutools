@@ -84,6 +84,7 @@ var Base = new Class({
 	},
 	
 	loadElements: function(group) {
+	  delete this.el[group + '_filter'];
 		for (name in this.elements[group])
 			this.loadElement(name, group);
 	},

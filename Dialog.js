@@ -201,14 +201,14 @@ var Dialog = Base.extend({
 	  var dialog = this.el.dialog_template.render(data);
 	  dialog.id = this.elements.container.dialog.substring(1);
 	  
-	  var old = $(dialog.id);
-	  if (old) old.remove();
-	  
 	  if (this.el.dialog) {
 	    this.el.dialog.replaceWith(dialog);
 	    if (this.options.centered) this.el.dialog.center();
-	  } else
+	  } else {
+	    var old = $(dialog.id);
+  	  if (old) old.remove();
 	    dialog.injectInside(this.el.inside || document.body);
+	  }
 		
 		this.loadElements('container');
 		this.loadElements('dialog');

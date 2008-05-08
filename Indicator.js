@@ -12,6 +12,7 @@ var Indicator = new Class({
 		this.container.setHTML('<img src="/images/' + image + '" />');
 		this.container.setStyles({ position: 'absolute', opacity: 0, 'z-index': 5000 });
 		this.container.injectInside(document.body);
+		this.container.hide();
 		
 		$(document.body).addEvent('mousemove', function(e) {
 			this.container.setStyles({
@@ -21,5 +22,5 @@ var Indicator = new Class({
 		}.bindWithEvent(this));
 	},
 	show: function() { this.container.fadeIn(500); },
-	hide: function() { this.container.fadeOut(500); }
+	hide: function() { this.container.fadeOut(500); this.container.hide(); }
 });
