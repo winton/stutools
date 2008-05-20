@@ -30,7 +30,7 @@ var Lightbox = new Class({
 	fire: function() {
 		this.fireEvent('onClick');
 	},
-	hide: function(dialog, fx, keep_lightbox) {
+	hide: function(dialog, keep_lightbox) {
 		if (!keep_lightbox) {
 			this.detach();
 			this.box.hide();

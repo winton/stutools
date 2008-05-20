@@ -85,6 +85,7 @@ var Dialog = Base.extend({
 
   		centered: false,
   		lightbox: false,
+  		rerender: false,
   		reset:    false,
       
   		inside:    null,
@@ -170,7 +171,7 @@ var Dialog = Base.extend({
 	*/
 
 	hide: function(keep_lightbox) {
-		if (this.el.dialog) this.fireEvent('onHide', [ this.el.dialog, keep_lightbox]);
+		if (this.el.dialog) this.fireEvent('onHide', [ this.el.dialog, keep_lightbox ]);
 	},
 	
 	/*
@@ -268,7 +269,7 @@ var Dialog = Base.extend({
 	*/
 	
 	show: function(data) {
-	  if (!this.el.dialog) this.render(data);
+	  if (!this.el.dialog || this.options.rerender) this.render(data);
 	  if (this.options.centered) {
 	    this.el.dialog.setStyles({
 	      display:   '',

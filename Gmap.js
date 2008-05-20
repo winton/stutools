@@ -21,7 +21,7 @@ var Gmap = new Class({
 	},
 	create: {
     imageUrl: function(type, num, highlight) {
-      return '/images/markers/' + type + '/' + (highlight ? 'highlight/' : '') + (num+1) + '.png';
+      return '/images/markers/' + type + '/' + (highlight ? 'highlights/' : '') + (num+1) + '.png';
     },
     icon: function(type, num) {
       var icon = new GIcon();
@@ -62,7 +62,7 @@ var Gmap = new Class({
     }
   },
   highlight: function(on, type, num) {
-    this.markers[type][num].setImage(this.create.imageUrl(type, num));
+    this.markers[type][num].setImage(this.create.imageUrl(type, num, on));
   },
 	changeZoomImage: function() {
 	  this.map.addControl(new GSmallZoomControl());
@@ -98,6 +98,15 @@ var Gmap = new Class({
     children[1].setStyle('opacity', 0);
     children[2].setStyle('opacity', 0);
 	},
+	showAddress: function(address) {
+    this.geocoder.getLatLng(address,
+      function(point) {
+        if (!point)
+          alert(address + " not found");
+        else
+          this.map.setCenter(point, 13);
+      }.bind(this));
+  },
 	zoomAllMarkers: function() {
 	  var bounds = new GLatLngBounds();
 	  this.eachMarker(function(marker) { bounds.extend(marker.getPoint()); }, this);
