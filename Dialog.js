@@ -179,8 +179,8 @@ var Dialog = Base.extend({
 		Called by onShow. Focuses the form.
 	*/
 	
-	ready: function() {
-	  this.el.dialog.focusFirst();
+	ready: function(select) {
+	  this.el.dialog.focusFirst(select);
 	  this.fireEvent('onReady', [ this.el.dialog ]);
 	  
 	  // table support
@@ -228,19 +228,14 @@ var Dialog = Base.extend({
 		url - The URL for the remote request.
 	*/
 	
-	render_remote: function(options) {
+	render_remote: function(url, onComplete) {
 		Global.Indicator.show();
-		
-		var url = options.url;
-		delete options.url;
 		
 		new Ajax(url, {
 			onComplete: function(response) {
-				response = Json.evaluate(response).content;
-				
-				this.render(Object.extend(options, { content: response }));
-				this.show();
-				
+				response = Json.evaluate(response);
+				this.render({ content: response.content });
+				onComplete.bind(this)(response);
 				Global.Indicator.hide();
 			}.bind(this),
 			method: 'get'

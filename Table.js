@@ -175,15 +175,23 @@ var Table = Base.extend({
     var hr = $ES('.hr', this.container)[0];
     var header = $ES('.header', this.container)[0];
     var pagination = $ES('.pagination', this.container)[0];
-    if (hr) hr.remove();
-    if (header) header.remove();
-    if (pagination) pagination.remove();
-    this.el.content.remove();
     
-    var div = new Element('div');
-    div.setHTML(content);
-    div.getChildren().each(function(item) { item.injectInside(this.container); }, this);
-    this.attach();
+    this.el.content.getFx(600).start({ opacity:0, 'margin-left':150 }).chain(function() {
+      var div = new Element('div');
+      div.setHTML(content);
+      div.getChildren().each(function(item) {
+        item.setStyle('opacity', 0);
+        item.injectInside(this.container);
+        item.fadeIn();
+      }, this);
+      
+      if (hr) hr.remove();
+      if (header) header.remove();
+      if (pagination) pagination.remove();
+      this.el.content.remove();
+      
+      this.attach();
+    }.bind(this));
   }
 });
 
