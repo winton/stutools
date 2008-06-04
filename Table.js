@@ -7,6 +7,8 @@ var Table = Base.extend({
   //  .content
   //    (rows)
   initialize: function(container, options) {
+    if (!container) return;
+    
     this.container = container;
     this.options   = {
       map: false,
@@ -118,9 +120,8 @@ var Table = Base.extend({
       this.fireEvent('onRowAdd', [ item, index, form ]);
     
       item.addEvent('click', function(e) {
-        e.stop();
         if (item.getStyle('height').toInt() == 0) return;
-        this.fireEvent('onRowClick', [ item, index, form ]);
+        this.fireEvent('onRowClick', [ item, index, form, e ]);
       }.bindWithEvent(this));
     
       item.addEvent('mouseover', function(e) {
