@@ -33,6 +33,21 @@ Element.extend({
 	},
 	
 	/*
+	Property: elasticize
+		Keeps a div in browser view (scrolls vertically)...with elasticity
+	*/
+	
+	elasticize: function() {
+	  var fx = new Fx.Styles(this, { duration: 1500, wait: false, transition: Fx.Transitions.Elastic.easeOut });
+    var og_top = this.getPosition().y;
+    window.addEvent('scroll', function() {
+      var top = window.getScrollTop();
+      if (top > og_top) fx.start({ top: top - og_top + 15 });
+      else fx.start({ top: 0 });
+    });
+	},
+	
+	/*
 	Property: hide
 		Sets display:none.
 	*/

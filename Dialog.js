@@ -299,7 +299,7 @@ var Dialog = Base.extend({
 				  this.fireEvent('onRespond', [ this.el.dialog, json ]);
 				  if (json.errors) {
 				    var inputs = $ES('input, textarea', form).filter(function(item) {
-				      return (item.getProperty('type') != 'submit');
+				      return (item.getProperty('type') != 'submit' && item.getProperty('type') != 'hidden');
 				    });
 				    inputs = inputs.sort(function(a, b) {
 				      return a.getProperty('tabindex').toInt() - b.getProperty('tabindex').toInt();
@@ -309,6 +309,7 @@ var Dialog = Base.extend({
 				    $each(json.errors, function(value, model) {
 				      $each(value, function(messages, name) {
 				        var el = form[model + '[' + name + ']'];
+				        el = el.length ? el[0] : el;
 				        index = inputs.indexOf(el) < index ? inputs.indexOf(el) : index;
 				        this.fireEvent('onValidationFailed', [ validation, el , messages ]);
 				      }, this);

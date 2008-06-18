@@ -24,7 +24,6 @@ var Gmap = new Class({
       this.markers = {};
 
       this.map.changeZoomImage();
-      this.map.elasticize();
       this.map.killGoogleLogo();
 
       window.onunload = function() { GUnload(); };
@@ -44,15 +43,6 @@ var Gmap = new Class({
           map_last.show();
         }
       }).periodical(100);
-  	},
-	  elasticize: function() {
-  	  var fx = new Fx.Styles($('map'), { duration: 1500, wait: false, transition: Fx.Transitions.Elastic.easeOut });
-      var og_top = this.container.getPosition().y;
-      window.addEvent('scroll', function() {
-        var top = window.getScrollTop();
-        if (top > og_top) fx.start({ top: top - og_top + 15 });
-        else fx.start({ top: 0 });
-      }.bind(this));
   	},
   	killGoogleLogo: function() {
   	  var children = $('map').getChildren();
@@ -88,6 +78,10 @@ var Gmap = new Class({
       var marker = new GMarker(latlng, {
         icon: this.marker.icon(type, num), zIndexProcess: function() { return 100 - num; }
       });
+      
+      GEvent.addListener(marker, 'click', function() {
+        this.fireEvent('onMarkerClick', [marker, type, num]);
+      }.bind(this));
 
       GEvent.addListener(marker, 'mouseover', function() {
         this.marker.highlight(true, type, num);
@@ -107,13 +101,15 @@ var Gmap = new Class({
       return marker;
     },
     remove: function(type, num) {
-      this.gmap.removeOverlay(this.markers[type][num]);
+      if (this.markers[type] && this.markers[type][num])
+        this.gmap.removeOverlay(this.markers[type][num]);
     },
     remove_all: function() {
       this.marker.each(function(marker, type, num) { this.marker.remove(type, num); }, this);
     },
     highlight: function(on, type, num) {
-      this.markers[type][num].setImage(this.marker.imageUrl(type, num, on));
+      if (this.markers[type] && this.markers[type][num])
+        this.markers[type][num].setImage(this.marker.imageUrl(type, num, on));
     },
     imageUrl: function(type, num, highlight) {
       return '/images/markers/' + type + '/' + (highlight ? 'highlights/' : '') + (num+1) + '.png';
@@ -132,6 +128,23 @@ var Gmap = new Class({
   	  $each(this.markers, function(value, key) {
         $each(value, function(v, k) { fn.bind(bind)(this.markers[key][k], key, k); }, this);
       }, this);
+  	},
+  	tooltip: function(on, type, num, form, template) {
+  	  var tooltip = $('map_tooltip_' + type + '_' + num);
+  	  if (on) {
+    	  var marker_offset = this.gmap.fromLatLngToContainerPixel(this.markers[type][num].getLatLng());
+    	  var map_offset = this.container.getPosition();
+    	  var offset = { x: marker_offset.x + map_offset.x, y: marker_offset.y + map_offset.y };
+  	    if (!tooltip) {
+    	    tooltip = $(template||'template_map_tooltip').render({ form: form });
+    	    tooltip.id = 'map_tooltip_' + type + '_' + num;
+    	    tooltip.hide();
+    	    tooltip.injectInside(document.body);
+    	  }
+    	  tooltip.setStyles({ top: offset.y, left: offset.x });
+    	  tooltip.fadeIn();
+	    } else
+	      tooltip.fadeOut();
   	}
 	}
 });
