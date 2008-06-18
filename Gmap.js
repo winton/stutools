@@ -101,8 +101,10 @@ var Gmap = new Class({
       return marker;
     },
     remove: function(type, num) {
-      if (this.markers[type] && this.markers[type][num])
+      if (this.markers[type] && this.markers[type][num]) {
         this.gmap.removeOverlay(this.markers[type][num]);
+        delete this.markers[type][num];
+      }
     },
     remove_all: function() {
       this.marker.each(function(marker, type, num) { this.marker.remove(type, num); }, this);
