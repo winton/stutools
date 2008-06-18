@@ -134,7 +134,7 @@ var Gmap = new Class({
   	tooltip: function(on, type, num, form, template) {
   	  var tooltip = $('map_tooltip_' + type + '_' + num);
   	  if (on) {
-    	  var marker_offset = this.gmap.fromLatLngToContainerPixel(this.markers[type][num].getLatLng());
+    	  var marker_offset = this.gmap.fromLatLngToContainerPixel(this.markers[type.replace('shout_', '')][num].getLatLng());
     	  var map_offset = this.container.getPosition();
     	  var offset = { x: marker_offset.x + map_offset.x, y: marker_offset.y + map_offset.y };
   	    if (!tooltip) {
@@ -147,6 +147,7 @@ var Gmap = new Class({
     	  tooltip.fadeIn();
 	    } else
 	      tooltip.fadeOut();
+	    return tooltip.id;
   	}
 	}
 });
